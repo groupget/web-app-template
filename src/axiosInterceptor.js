@@ -1,10 +1,13 @@
 import axios from "axios";
-import {LOGOUT} from "./reducers/logged";
+import {LOGOUT, REFRESH} from "./reducers/logged";
 import {HIDE_LOADING_BLOCKER} from "./reducers/globalMessages";
 import {notifSend} from "redux-notifications/src/actions";
+import * as AmazonCognitoIdentity from "amazon-cognito-identity-js";
+import config from "./constants/config";
 
 export default function createAxiosInterceptor(store) {
     axios.interceptors.request.use(request => {
+        store.dispatch({ type: REFRESH });
         request.headers = {'Authorization': 'Bearer ' + localStorage.getItem("jwt")};
         request.timeout = 5000;
         // request.withCredentials = true

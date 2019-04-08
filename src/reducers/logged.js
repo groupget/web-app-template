@@ -1,8 +1,13 @@
-export const LOGIN = '@logged/LOGIN'
-export const LOGOUT = '@logged/LOGOUT'
+import * as AmazonCognitoIdentity from "amazon-cognito-identity-js";
+import getTokenFromLocalStorage from "../utils/cognito";
+
+export const LOGIN = '@logged/LOGIN';
+export const REFRESH = '@logged/REFRESH';
+export const LOGOUT = '@logged/LOGOUT';
 
 const initialState = {
-    logged: localStorage.getItem("logged")
+    logged: localStorage.getItem("logged"),
+    cognitoUser: {}
 }
 
 export default (state = initialState, action) => {
@@ -13,6 +18,7 @@ export default (state = initialState, action) => {
             return {
                 ...state,
                 logged: true,
+                cognitoUser: action.cognitoUser
             };
 
         case LOGOUT:
@@ -21,18 +27,29 @@ export default (state = initialState, action) => {
                 logged: false,
             };
 
+        case REFRESH:
+            let refreshToken = {
+                RefreshToken: getTokenFromLocalStorage('refreshToken')
+            };
+            let cognitoRefreshToken = new AmazonCognitoIdentity.CognitoRefreshToken(refreshToken);
+            state.cognitoUser.refreshSession(cognitoRefreshToken, (error, session) => {
+                console.log(error);
+                console.log(session);
+            });
+            return {
+                ...state,
+            };
+
         default:
             return state
     }
 }
 
-export const loginSuccess = token => dispatch => {
-    localStorage.setItem("logged", true);
-    localStorage.setItem("jwt", token);
-    dispatch({ type: LOGIN })
+export const loginSuccess = cognitoUser => dispatch => {
+    dispatch({ type: LOGIN, cognitoUser: cognitoUser })
 }
 
 export const logout = () => dispatch => {
-    localStorage.clear()
+    localStorage.clear();
     dispatch({ type: LOGOUT })
 }
